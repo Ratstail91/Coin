@@ -35,11 +35,39 @@ namespace Coin {
 			if(obj == null) {
 				return null;
 			}
+			//I have no idea what's going on here
 			BinaryFormatter bf = new BinaryFormatter();
 			using (MemoryStream ms = new MemoryStream()) {
 				bf.Serialize(ms, obj);
 				return ms.ToArray();
 			}
+		}
+
+		public static uint CrunchHash(byte[] data, int hardness, Action<uint, uint> cb = null) {
+			if (hardness < 0 || hardness > 31) {
+				throw new Exception("Hardness must be between 0 and 31");
+			}
+
+			//give cb a dummy value, so we're not calling an if-statement every loop
+			if (cb == null) {
+				cb = (uint h, uint n) => {};
+			}
+
+			Pack p = new Pack(data);
+
+			uint hash;
+			do {
+				hash = FNVHash.Hash_1a_32(Util.ObjectToByteArray(p));
+				cb(hash, p.nonce);
+			} while((hash >= 1 << (32 - hardness)) && ++p.nonce != 0);
+
+			return p.nonce;
+		}
+
+		public static bool CheckHash(byte[] data, int hardness, uint nonce) {
+			Pack p = new Pack(data, nonce);
+			uint hash = FNVHash.Hash_1a_32(Util.ObjectToByteArray(p));
+			return hash < 1 << (32 - hardness);
 		}
 	}
 }
