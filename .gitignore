@@ -24,6 +24,7 @@ macros/
 *.jar
 *.log
 auth.json
+*.chain
 
 #Shell files
 *.bat
